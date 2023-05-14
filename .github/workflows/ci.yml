@@ -36,6 +36,12 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Install golang migrate
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/$version/migrate.$os-$arch.tar.gz | tar xvz
+          mv migrate.$os-$arch migrate
+          sudo mv migrate /usr/local/bin/
+
       - name: Run migrations
         run: make migrateup
 
