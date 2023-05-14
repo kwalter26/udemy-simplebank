@@ -1,4 +1,4 @@
-# Go Simple Bank (Udemy Course) [![Go](https://github.com/kwalter26/udemy-simplebank/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kwalter26/udemy-simplebank/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/kwalter26/udemy-simplebank/branch/main/graph/badge.svg?token=hbYZBzkiYa)](https://codecov.io/gh/kwalter26/udemy-simplebank) [![Go Report Card](https://goreportcard.com/badge/github.com/kwalter26/udemy-simplebank)](https://goreportcard.com/report/github.com/kwalter26/udemy-simplebank)
+# Go Simple Bank (Udemy Course) [![Go](https://github.com/kwalter26/udemy-simplebank/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kwalter26/udemy-simplebank/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/kwalter26/udemy-simplebank/branch/main/graph/badge.svg?token=hbYZBzkiYa)](https://codecov.io/gh/kwalter26/udemy-simplebank)
 ### Migration up 
 
 ```bash
