@@ -17,5 +17,8 @@ sqlc:
 test:
 	go test -v -cover ./...  -coverprofile=coverage.out
 
+server:
+	go run main.go
+
 .PHONY: postgres createdb
 
