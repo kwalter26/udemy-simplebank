@@ -122,7 +122,7 @@ func randomAccount() db.Account {
 	}
 }
 
-func TestServer_createAccount(t *testing.T) {
+func TestCreateAccount(t *testing.T) {
 
 	account := randomAccount()
 	account.Balance = 0
