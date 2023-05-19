@@ -353,3 +353,242 @@ func requireBodyMatchAccounts(t *testing.T, body *bytes.Buffer, i int) {
 	}
 	require.Equal(t, i, len(accounts))
 }
+
+func TestUpdateAccount(t *testing.T) {
+	account := randomAccount()
+
+	testCases := []struct {
+		name          string
+		uri           updateAccountRequest
+		body          updateAccountRequestBody
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			uri: updateAccountRequest{
+				ID: account.ID,
+			},
+			body: updateAccountRequestBody{
+				Balance: account.Balance,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateAccountParams{
+					ID:      account.ID,
+					Balance: account.Balance,
+				}
+				store.EXPECT().
+					UpdateAccount(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(account, nil)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchAccount(t, recorder.Body, account)
+			},
+		},
+		{
+			name: "NotFound",
+			uri: updateAccountRequest{
+				ID: account.ID,
+			},
+			body: updateAccountRequestBody{
+				Balance: account.Balance,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateAccountParams{
+					ID:      account.ID,
+					Balance: account.Balance,
+				}
+				store.EXPECT().
+					UpdateAccount(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(db.Account{}, sql.ErrNoRows)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "InternalError",
+			uri: updateAccountRequest{
+				ID: account.ID,
+			},
+			body: updateAccountRequestBody{
+				Balance: account.Balance,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateAccountParams{
+					ID:      account.ID,
+					Balance: account.Balance,
+				}
+				store.EXPECT().
+					UpdateAccount(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(db.Account{}, sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+
+		{
+			name: "BadRequest (InvalidID)",
+			uri: updateAccountRequest{
+				ID: 0,
+			},
+			body: updateAccountRequestBody{
+				Balance: account.Balance,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateAccountParams{
+					ID:      account.ID,
+					Balance: account.Balance,
+				}
+				store.EXPECT().
+					UpdateAccount(gomock.Any(), gomock.Eq(args)).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "BadRequest (NegativeBalance)",
+			uri: updateAccountRequest{
+				ID: account.ID,
+			},
+			body: updateAccountRequestBody{
+				Balance: -1,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateAccountParams{
+					ID:      account.ID,
+					Balance: account.Balance,
+				}
+				store.EXPECT().
+					UpdateAccount(gomock.Any(), gomock.Eq(args)).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+	}
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			body := struct {
+				Balance int64 `json:"balance"`
+			}{
+				Balance: tc.body.Balance,
+			}
+
+			url := fmt.Sprintf("/accounts/%d", tc.uri.ID)
+			var buf bytes.Buffer
+			err := json.NewEncoder(&buf).Encode(body)
+			require.NoError(t, err)
+			request, err := http.NewRequest(http.MethodPut, url, &buf)
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(recorder)
+		})
+	}
+}
+
+func TestDeleteAccount(t *testing.T) {
+	account := randomAccount()
+
+	testCases := []struct {
+		name          string
+		accountID     int64
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name:      "OK",
+			accountID: account.ID,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteAccount(gomock.Any(), gomock.Eq(account.ID)).
+					Times(1).
+					Return(nil)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+			},
+		},
+		{
+			name:      "NotFound",
+			accountID: account.ID,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteAccount(gomock.Any(), gomock.Eq(account.ID)).
+					Times(1).
+					Return(sql.ErrNoRows)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name:      "InternalError",
+			accountID: account.ID,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteAccount(gomock.Any(), gomock.Eq(account.ID)).
+					Times(1).
+					Return(sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:      "BadRequest (InvalidID)",
+			accountID: 0,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteAccount(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			url := fmt.Sprintf("/accounts/%d", tc.accountID)
+
+			request, err := http.NewRequest(http.MethodDelete, url, nil)
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(recorder)
+		})
+	}
+}
