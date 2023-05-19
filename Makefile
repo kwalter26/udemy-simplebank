@@ -17,5 +17,14 @@ sqlc:
 test:
 	go test -v -cover ./...  -coverprofile=coverage.out
 
+server:
+	go run main.go
+
+gin:
+	gin -i run main.go --all --port 8080
+
+mock:
+	mockgen -package mockdb -destination db/mock/store.go github.com/kwalter26/udemy-simplebank/db/sqlc Store
+
 .PHONY: postgres createdb
 
