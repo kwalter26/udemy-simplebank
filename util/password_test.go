@@ -25,4 +25,8 @@ func TestHashPassword(t *testing.T) {
 	require.NotEmpty(t, hashPassword2)
 	require.NotEqual(t, hashPassword, hashPassword2)
 
+	longPassword := RandomString(1000)
+	_, err = HashPassword(longPassword)
+	require.EqualError(t, err, bcrypt.ErrPasswordTooLong.Error())
+
 }
