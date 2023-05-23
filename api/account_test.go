@@ -226,6 +226,23 @@ func TestCreateAccount(t *testing.T) {
 				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
+		// unique constraint violation owner
+		{
+			name: "BadRequest (DuplicateOwner)",
+			body: createAccountRequest{
+				Owner:    account.Owner,
+				Currency: account.Currency,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateAccount(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Account{}, &pg.Error{Code: "23503"})
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
+			},
+		},
 	}
 	for i := range testCases {
 		tc := testCases[i]
