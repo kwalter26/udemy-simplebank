@@ -1,40 +1,57 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
+	"github.com/kwalter26/udemy-simplebank/token"
+	"github.com/kwalter26/udemy-simplebank/util"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
-	router := gin.Default()
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	maker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maketer: %w", err)
+	}
+
+	server := &Server{store: store, tokenMaker: maker, config: config}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		err := v.RegisterValidation("currency", validCurrency)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 	}
 
-	router.POST("/accounts", server.createAccount)
-	router.GET("/accounts", server.listAccounts)
-	router.GET("/accounts/:id", server.getAccount)
-	router.PUT("/accounts/:id", server.updateAccount)
-	router.DELETE("/accounts/:id", server.deleteAccount)
+	server.setupRouter()
+	return server, nil
+}
 
-	router.POST("/transfers", server.createTransfer)
+func (s *Server) setupRouter() {
+	router := gin.Default()
+	router.POST("/users", s.CreateUser)
+	router.POST("/users/login", s.loginUser)
 
-	router.POST("/users", server.CreateUser)
+	authRoutes := router.Group("/").Use(authMiddleware(s.tokenMaker))
 
-	server.router = router
-	return server
+	authRoutes.POST("/accounts", s.createAccount)
+	authRoutes.GET("/accounts", s.listAccounts)
+	authRoutes.GET("/accounts/:id", s.getAccount)
+	authRoutes.PUT("/accounts/:id", s.updateAccount)
+	authRoutes.DELETE("/accounts/:id", s.deleteAccount)
+
+	authRoutes.POST("/transfers", s.createTransfer)
+
+	s.router = router
 }
 
 func (s *Server) Start(address string) error {

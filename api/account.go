@@ -2,26 +2,28 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gin-gonic/gin"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
+	"github.com/kwalter26/udemy-simplebank/token"
 	"github.com/lib/pq"
 	"net/http"
 )
 
 type createAccountRequest struct {
-	Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
-func (s Server) createAccount(context *gin.Context) {
+func (s *Server) createAccount(context *gin.Context) {
 	var req createAccountRequest
 	if err := context.ShouldBindJSON(&req); err != nil {
 		context.JSON(400, errorResponse(err))
 		return
 	}
 
+	authPayload := context.MustGet(authorizationPayloadKey).(*token.Payload)
 	arg := db.CreateAccountParams{
-		Owner:    req.Owner,
+		Owner:    authPayload.Username,
 		Currency: req.Currency,
 	}
 
@@ -61,6 +63,13 @@ func (s *Server) getAccount(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
+	authPayload := context.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err = errors.New("account doesn't belong to the authenticated user")
+		context.JSON(http.StatusForbidden, errorResponse(err))
+		return
+	}
+
 	context.JSON(http.StatusOK, account)
 }
 
@@ -76,7 +85,9 @@ func (s *Server) listAccounts(context *gin.Context) {
 		return
 	}
 
+	authPayload := context.MustGet(authorizationPayloadKey).(*token.Payload)
 	arg := db.ListAccountsParams{
+		Owner:  authPayload.Username,
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}

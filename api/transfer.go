@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
+	"github.com/kwalter26/udemy-simplebank/token"
 	"net/http"
 )
 
@@ -22,11 +23,20 @@ func (s *Server) createTransfer(context *gin.Context) {
 		return
 	}
 
-	if !s.validAccountCurrency(context, req.FromAccountID, req.Currency) {
+	fromAccount, valid := s.validAccountCurrency(context, req.FromAccountID, req.Currency)
+	if !valid {
 		return
 	}
 
-	if !s.validAccountCurrency(context, req.ToAccountID, req.Currency) {
+	authPayload := context.MustGet(authorizationPayloadKey).(*token.Payload)
+	if fromAccount.Owner != authPayload.Username {
+		err := fmt.Errorf("from account doesn't belong to the authenticated user")
+		context.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	_, valid = s.validAccountCurrency(context, req.ToAccountID, req.Currency)
+	if !valid {
 		return
 	}
 
@@ -46,20 +56,20 @@ func (s *Server) createTransfer(context *gin.Context) {
 }
 
 // check valid account currency
-func (s *Server) validAccountCurrency(context *gin.Context, accountID int64, currency string) bool {
+func (s *Server) validAccountCurrency(context *gin.Context, accountID int64, currency string) (db.Account, bool) {
 	account, err := s.store.GetAccount(context, accountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(404, errorResponse(err))
-			return false
+			return account, false
 		}
 		context.JSON(500, errorResponse(err))
-		return false
+		return account, false
 	}
 	if account.Currency != currency {
 		err = fmt.Errorf("account [%d] currency mismatch: %s vs %s", accountID, account.Currency, currency)
 		context.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return account, false
 	}
-	return true
+	return account, true
 }
