@@ -22,7 +22,7 @@ sqlc:
 	sqlc generate
 
 test:
-	go test -v -cover ./...  -coverprofile=coverage.out
+	go test -v -cover ./... -coverprofile=coverage.out
 
 server:
 	go run main.go
