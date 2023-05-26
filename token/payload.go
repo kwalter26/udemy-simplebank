@@ -50,9 +50,6 @@ func (p *Payload) GetAudience() (jwt.ClaimStrings, error) {
 
 func (p *Payload) Valid() error {
 	now := time.Now()
-	if now.Before(p.NotBefore) {
-		return ErrInvalidToken
-	}
 	if now.After(p.ExpireAt) {
 		return ErrExpiredToken
 	}
