@@ -1,0 +1,37 @@
+# docker-compose up -d
+version: '3.7'
+services:
+  postgres:
+    image: postgres:15.3-alpine
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: simple_bank
+    ports:
+      - 5432:5432
+    # Connect to bank-network with an alias of postgres
+    networks:
+      - bank-network
+
+  # service for local docker image
+  bank:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bank
+    restart: always
+    ports:
+      - 9000:8080
+    networks:
+      - bank-network
+    depends_on:
+      - postgres
+    environment:
+      - GIN_MODE=release
+      - DB_SOURCE=postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable
+# Netowrk called bank-network
+networks:
+  bank-network:
+    driver: bridge
