@@ -16,12 +16,12 @@ RUN addgroup -S $GROUP && adduser -S $USERNAME -G $GROUP
 USER $USERNAME
 
 WORKDIR /app
-COPY --chown=$USERNAME:$GROUP --from=builder /app/main .
-COPY --chown=$USERNAME:$GROUP --from=builder /app/migrate ./migrate
+COPY --chmod=544 --chown=$USERNAME:$GROUP --from=builder /app/main ./
+COPY --chmod=544 --chown=$USERNAME:$GROUP --from=builder /app/migrate ./
 # COPY as a user
-COPY --chown=$USERNAME:$GROUP start.sh .
-COPY --chown=$USERNAME:$GROUP app.env .
-COPY --chown=$USERNAME:$GROUP db/migration ./migration
+COPY --chmod=544 --chown=$USERNAME:$GROUP start.sh ./
+COPY --chmod=544 --chown=$USERNAME:$GROUP app.env ./
+COPY --chmod=544 --chown=$USERNAME:$GROUP db/migration/ ./migration/
 
 EXPOSE 8080
 CMD ["/app/main"]
