@@ -56,6 +56,9 @@ jobs:
         # You may pin to the exact commit or the version.
         # uses: SonarSource/sonarcloud-github-action@5875562561d22a34be0c657405578705a169af6c
         uses: SonarSource/sonarcloud-github-action@v1.9.1
+        with:
+          organization: "fusionkoding"
+          projectKey: "kwalter26_udemy-simplebank"
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
