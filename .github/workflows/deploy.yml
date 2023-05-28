@@ -24,6 +24,9 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Load secrets and save to app.env
+        run: aws secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-east-1:580135675841:secret:simple_bank-WbTOhJ --query SecretString --output text | jq 'to_entries|map("\(.key)=\(.value)")|.[]' -r > app.env
       
       - name: Docker Setup Buildx
         uses: docker/setup-buildx-action@v2.5.0
