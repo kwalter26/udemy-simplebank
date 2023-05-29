@@ -2,3 +2,4 @@
 /coverage.out
 /gin-bin
 *.env
+!local.env

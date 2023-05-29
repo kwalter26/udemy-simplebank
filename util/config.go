@@ -1,7 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -18,10 +21,27 @@ type Config struct {
 	NewRelicAppEnabled                bool          `mapstructure:"NEWRELIC_APP_ENABLED"`
 }
 
-func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
+type Environment string
+
+const (
+	Local Environment = "local"
+	Prod  Environment = "prod"
+	Test  Environment = "test"
+)
+
+func LoadConfig(path string, env Environment) (config Config, err error) {
+	absPath, err := filepath.Abs(path)
+	filename := string(env) + ".env"
+
+	filePath := absPath + "/" + filename
+	if _, err := os.Stat(filePath); err == nil {
+		fmt.Printf("Found file '%s'. Loading variables...", filePath)
+		viper.AddConfigPath(absPath)
+		viper.SetConfigName(filename)
+		viper.SetConfigType("env")
+	} else {
+		fmt.Printf("%s does not exist\n", filePath)
+	}
 
 	viper.AutomaticEnv()
 
