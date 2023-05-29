@@ -23,6 +23,8 @@ COPY --chmod=544 --chown=$USERNAME:$GROUP start.sh ./
 COPY --chmod=544 --chown=$USERNAME:$GROUP app.env ./
 COPY --chmod=544 --chown=$USERNAME:$GROUP db/migration/ ./migration/
 
+ENV GIN_MODE=release
+
 EXPOSE 8080
 CMD ["/app/main"]
 ENTRYPOINT ["/app/start.sh"]
