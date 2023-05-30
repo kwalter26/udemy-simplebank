@@ -30,8 +30,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker Metadata action
-        # You may pin to the exact commit or the version.
-        # uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
+        id: meta
         uses: docker/metadata-action@v4.4.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
