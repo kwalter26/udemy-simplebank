@@ -3,7 +3,10 @@ WORKDIR /app
 COPY . .
 RUN go build -o main .
 RUN apk add --no-cache curl
-RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz  | tar xvz
+
+ARG TARGETPLATFORM
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then ARCHITECTURE=amd64; elif [ "$TARGETPLATFORM" = "linux/arm/v7" ]; then ARCHITECTURE=arm64; else ARCHITECTURE=amd64; fi \
+    && curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-${ARCHITECTURE}.tar.gz  | tar xvz
 
 FROM alpine:3.18.0
 
