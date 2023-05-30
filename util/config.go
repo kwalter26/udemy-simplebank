@@ -26,10 +26,10 @@ type Environment string
 const (
 	Local Environment = "local"
 	Prod  Environment = "prod"
-	Test  Environment = "test"
 )
 
 func LoadConfig(path string, env Environment) (config Config, err error) {
+	viper.AutomaticEnv()
 	absPath, err := filepath.Abs(path)
 	filename := string(env) + ".env"
 
@@ -39,17 +39,14 @@ func LoadConfig(path string, env Environment) (config Config, err error) {
 		viper.AddConfigPath(absPath)
 		viper.SetConfigName(filename)
 		viper.SetConfigType("env")
+		err = viper.ReadInConfig()
+		if err != nil {
+			return Config{}, err
+		}
 	} else {
 		fmt.Printf("%s does not exist\n", filePath)
 	}
 
-	viper.AutomaticEnv()
-
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
-	}
-
 	err = viper.Unmarshal(&config)
-	return
+	return config, err
 }
