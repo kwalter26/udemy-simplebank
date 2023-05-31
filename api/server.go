@@ -8,6 +8,8 @@ import (
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
 	"github.com/kwalter26/udemy-simplebank/token"
 	"github.com/kwalter26/udemy-simplebank/util"
+	"github.com/newrelic/go-agent/v3/integrations/nrgin"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 type Server struct {
@@ -15,6 +17,7 @@ type Server struct {
 	store      db.Store
 	tokenMaker token.Maker
 	router     *gin.Engine
+	app        *newrelic.Application
 }
 
 func NewServer(config util.Config, store db.Store) (*Server, error) {
@@ -24,6 +27,19 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	}
 
 	server := &Server{store: store, tokenMaker: maker, config: config}
+
+	if config.NewRelicAppEnabled {
+		app, err := newrelic.NewApplication(
+			newrelic.ConfigAppName(config.NewRelicAppName),
+			newrelic.ConfigLicense(config.NewRelicLicenseKey),
+			newrelic.ConfigAppLogForwardingEnabled(config.NewRelicLogForwardingEnabled),
+			newrelic.ConfigDistributedTracerEnabled(config.NewRelicDistributedTracingEnabled),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create new relic app: %w", err)
+		}
+		server.app = app
+	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		err := v.RegisterValidation("currency", validCurrency)
@@ -38,6 +54,8 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 func (s *Server) setupRouter() {
 	router := gin.Default()
+
+	router.Use(nrgin.Middleware(s.app))
 	router.POST("/users", s.CreateUser)
 	router.POST("/users/login", s.loginUser)
 

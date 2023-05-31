@@ -1,0 +1,13 @@
+# Kubernetes ConfigMap called simple-bank-config with the following data:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-bank-api-configmap
+  namespace: simple-bank
+data:
+  DB_DRIVER: "nrpostgres"
+  SERVER_ADDRESS: "0.0.0.0:8080"
+  NEWRELIC_APP_ENABLED: "true"
+  NEWRELIC_APP_NAME: "simple-bank"
+  NEWRELIC_LOG_FORWARDING_ENABLED: "true"
+  NEWRELIC_DIST_TRACING_ENABLED: "true"

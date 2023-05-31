@@ -6,11 +6,12 @@ import (
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
 	"github.com/kwalter26/udemy-simplebank/util"
 	_ "github.com/lib/pq"
+	_ "github.com/newrelic/go-agent/_integrations/nrpq"
 	"log"
 )
 
 func main() {
-	config, err := util.LoadConfig(".")
+	config, err := util.LoadConfig(".", util.Prod)
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}

@@ -1,3 +1,7 @@
 /.idea/
 /coverage.out
 /gin-bin
+*.env
+!local.env
+!bad.env
+

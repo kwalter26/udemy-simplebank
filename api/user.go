@@ -1,11 +1,14 @@
 package api
 
 import (
+	ctx "context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
 	"github.com/kwalter26/udemy-simplebank/util"
 	"github.com/lib/pq"
+	"github.com/newrelic/go-agent/v3/newrelic"
+	"log"
 	"net/http"
 	"time"
 )
@@ -88,7 +91,12 @@ func (s *Server) loginUser(context *gin.Context) {
 		return
 	}
 
-	user, err := s.store.GetUser(context, req.Username)
+	txn := s.app.StartTransaction("postgresQuery")
+	log.Println("txn start", txn)
+	c := newrelic.NewContext(ctx.Background(), txn)
+	user, err := s.store.GetUser(c, req.Username)
+	txn.End()
+	log.Println("txn end", txn)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, errorResponse(err))
