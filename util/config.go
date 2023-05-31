@@ -3,8 +3,8 @@ package util
 import (
 	"fmt"
 	"github.com/spf13/viper"
-	"os"
 	"path/filepath"
+	"reflect"
 	"time"
 )
 
@@ -29,24 +29,41 @@ const (
 )
 
 func LoadConfig(path string, env Environment) (config Config, err error) {
-	viper.AutomaticEnv()
+	v := viper.New()
+	c, err2 := BindEnv(config, v)
+	if err2 != nil {
+		return c, err2
+	}
+	v.AutomaticEnv()
 	absPath, err := filepath.Abs(path)
 	filename := string(env) + ".env"
 
-	filePath := absPath + "/" + filename
-	if _, err := os.Stat(filePath); err == nil {
-		fmt.Printf("Found file '%s'. Loading variables...", filePath)
-		viper.AddConfigPath(absPath)
-		viper.SetConfigName(filename)
-		viper.SetConfigType("env")
-		err = viper.ReadInConfig()
-		if err != nil {
+	v.AddConfigPath(absPath)
+	v.SetConfigName(filename)
+	v.SetConfigType("env")
+
+	err = v.ReadInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Printf("Config file not found: %s/%s\n", absPath, filename)
+		} else {
+			fmt.Printf("Config file was found but another error was produced: %s/%s\n", absPath, filename)
 			return Config{}, err
 		}
-	} else {
-		fmt.Printf("%s does not exist\n", filePath)
 	}
 
-	err = viper.Unmarshal(&config)
+	err = v.Unmarshal(&config)
 	return config, err
+}
+
+func BindEnv(config Config, v *viper.Viper) (Config, error) {
+	keys := reflect.ValueOf(&config).Elem()
+	for i := 0; i < keys.NumField(); i++ {
+		key := keys.Type().Field(i).Tag.Get("mapstructure")
+		err := v.BindEnv(key)
+		if err != nil {
+			return config, err
+		}
+	}
+	return Config{}, nil
 }
