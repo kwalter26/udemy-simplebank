@@ -58,8 +58,9 @@ func (s *Server) setupRouter() {
 	router.Use(nrgin.Middleware(s.app))
 	router.POST("/users", s.CreateUser)
 	router.POST("/users/login", s.loginUser)
-	router.GET("readyz", s.getReadyz)
-	router.GET("healthz", s.getHealthz)
+	router.POST("/token/renew_access", s.renewAccessToken)
+	router.GET("/readyz", s.getReadyz)
+	router.GET("/healthz", s.getHealthz)
 
 	authRoutes := router.Group("/").Use(authMiddleware(s.tokenMaker))
 
