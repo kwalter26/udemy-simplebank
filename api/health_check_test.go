@@ -76,7 +76,7 @@ func TestGetHealthAndReady(t *testing.T) {
 			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
-			request, err := http.NewRequest(http.MethodGet, "/healthz", nil)
+			request, err := http.NewRequest(http.MethodGet, tc.url, nil)
 			require.NoError(t, err)
 
 			server.router.ServeHTTP(recorder, request)
