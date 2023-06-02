@@ -19,6 +19,7 @@ type Config struct {
 	NewRelicLogForwardingEnabled      bool          `mapstructure:"NEWRELIC_LOG_FORWARDING_ENABLED"`
 	NewRelicDistributedTracingEnabled bool          `mapstructure:"NEWRELIC_DIST_TRACING_ENABLED"`
 	NewRelicAppEnabled                bool          `mapstructure:"NEWRELIC_APP_ENABLED"`
+	RefreshTokenDuration              time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
 
 type Environment string
