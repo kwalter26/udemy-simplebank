@@ -1,7 +1,0 @@
-# Kubernetes Namespace called simple-bank
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: simple-bank
-  labels:
-    name: simple-bank

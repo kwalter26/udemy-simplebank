@@ -8,6 +8,7 @@ import (
 
 type Store interface {
 	Querier
+	Ping(ctx context.Context) error
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }
 
@@ -15,6 +16,10 @@ type Store interface {
 type SQLStore struct {
 	*Queries
 	db *sql.DB
+}
+
+func (store *SQLStore) Ping(ctx context.Context) error {
+	return store.db.PingContext(ctx)
 }
 
 // NewStore creates a new Store
