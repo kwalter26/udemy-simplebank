@@ -39,12 +39,13 @@ func (s *Server) Login(context context.Context, req *pb.LoginUserRequest) (*pb.L
 		return nil, status.Errorf(codes.Internal, "failed to login user: %s", err)
 	}
 
+	mdtd := s.extractMetadata(context)
 	session, err := s.store.CreateSession(context, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    "",
-		ClientIp:     "",
+		UserAgent:    mdtd.UserAgent,
+		ClientIp:     mdtd.ClientIp,
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpireAt,
 	})
