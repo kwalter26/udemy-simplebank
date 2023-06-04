@@ -76,13 +76,6 @@ func (x *LoginUserRequest) GetPassword() string {
 	return ""
 }
 
-//	 Create prototype for the response
-//	 SessionID             uuid.UUID    `json:"session_id"`
-//		AccessToken           string       `json:"access_token"`
-//		AccessTokenExpiresAt  time.Time    `json:"access_token_expires_at"`
-//		RefreshToken          string       `json:"refresh_token"`
-//		RefreshTokenExpiresAt time.Time    `json:"refresh_token_expires_at"`
-//		User                  userResponse `json:"user"`
 type LoginUserResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
