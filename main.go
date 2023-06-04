@@ -6,6 +6,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kwalter26/udemy-simplebank/api"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
+	"github.com/kwalter26/udemy-simplebank/doc"
 	"github.com/kwalter26/udemy-simplebank/gapi"
 	"github.com/kwalter26/udemy-simplebank/pb"
 	"github.com/kwalter26/udemy-simplebank/util"
@@ -83,7 +84,8 @@ func runGatewayServer(config util.Config, store db.Store) {
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
 
-	fs := http.FileServer(http.Dir("./doc/swagger"))
+	assets, _ := doc.Assets()
+	fs := http.FileServer(http.FS(assets))
 	mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
 
 	listener, err := net.Listen("tcp", config.HttpServerAddress)
