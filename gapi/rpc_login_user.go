@@ -6,12 +6,17 @@ import (
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
 	"github.com/kwalter26/udemy-simplebank/pb"
 	"github.com/kwalter26/udemy-simplebank/util"
+	"github.com/kwalter26/udemy-simplebank/val"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *Server) Login(context context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
+	if violations := validateLoginUserRequest(req); violations != nil {
+		return nil, invalidArgumentError(violations)
+	}
 
 	user, err := s.store.GetUser(context, req.GetUsername())
 
@@ -63,4 +68,14 @@ func (s *Server) Login(context context.Context, req *pb.LoginUserRequest) (*pb.L
 		RefreshTokenExpiresAt: timestamppb.New(refreshPayload.ExpireAt),
 	}
 	return rsp, nil
+}
+
+func validateLoginUserRequest(req *pb.LoginUserRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+	if err := val.ValidateUsername(req.GetUsername()); err != nil {
+		violations = append(violations, fieldViolation("username", err))
+	}
+	if err := val.ValidatePassword(req.GetPassword()); err != nil {
+		violations = append(violations, fieldViolation("password", err))
+	}
+	return violations
 }
