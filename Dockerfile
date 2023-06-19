@@ -23,7 +23,7 @@ COPY --chmod=544 --chown=$USERNAME:$GROUP --from=builder /app/main ./
 COPY --chmod=544 --chown=$USERNAME:$GROUP --from=builder /app/migrate ./
 # COPY as a user
 COPY --chmod=544 --chown=$USERNAME:$GROUP start.sh ./
-COPY --chmod=544 --chown=$USERNAME:$GROUP db/migration/ ./migration/
+COPY --chmod=544 --chown=$USERNAME:$GROUP db/migration/ ./db/migration/
 
 ENV GIN_MODE=release
 
