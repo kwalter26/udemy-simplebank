@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	Environment                       Environment   `mapstructure:"ENVIRONMENT"`
 	DBDriver                          string        `mapstructure:"DB_DRIVER"`
 	DBSource                          string        `mapstructure:"DB_SOURCE"`
 	HttpServerAddress                 string        `mapstructure:"HTTP_SERVER_ADDRESS"`
@@ -27,8 +28,9 @@ type Config struct {
 type Environment string
 
 const (
-	Local Environment = "local"
-	Prod  Environment = "prod"
+	Local       Environment = "local"
+	Development Environment = "development"
+	Prod        Environment = "prod"
 )
 
 func LoadConfig(path string, env Environment) (config Config, err error) {
