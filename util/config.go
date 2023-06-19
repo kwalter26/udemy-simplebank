@@ -14,6 +14,7 @@ type Config struct {
 	DBSource                          string        `mapstructure:"DB_SOURCE"`
 	HttpServerAddress                 string        `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GrpcServerAddress                 string        `mapstructure:"GRPC_SERVER_ADDRESS"`
+	RedisAddress                      string        `mapstructure:"REDIS_ADDRESS"`
 	TokenSymmetricKey                 string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	AccessTokenDuration               time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	MigrationUrl                      string        `mapstructure:"MIGRATION_URL"`
