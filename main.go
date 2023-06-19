@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kwalter26/udemy-simplebank/api"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
@@ -30,9 +33,23 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 
+	// run db migrations
+	runDBMigrations(config.MigrationUrl, config.DBSource)
+
 	store := db.NewStore(conn)
 	go runGatewayServer(config, store)
 	runGRPCServer(config, store)
+}
+
+func runDBMigrations(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal("cannot migrate db:", err)
+	}
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to apply migration:", err)
+	}
+	log.Println("db migration completed")
 }
 
 func runGRPCServer(config util.Config, store db.Store) {
