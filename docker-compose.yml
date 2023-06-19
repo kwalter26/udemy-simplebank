@@ -23,7 +23,8 @@ services:
     container_name: bank
     restart: always
     ports:
-      - 9000:8080
+      - 8080:8080
+      - 9090:9090
     networks:
       - bank-network
     depends_on:
@@ -31,6 +32,11 @@ services:
     environment:
       - GIN_MODE=release
       - DB_SOURCE=postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable
+      - DB_DRIVER=postgres
+      - MIGRATION_URL=file://db/migration
+      - TOKEN_SYMMETRIC_KEY=12345678901234567890123456789012
+      - HTTP_SERVER_ADDRESS=0.0.0.0:8080
+      - GRPC_SERVER_ADDRESS=0.0.0.0:9090
 # Netowrk called bank-network
 networks:
   bank-network:
