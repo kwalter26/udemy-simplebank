@@ -15,6 +15,7 @@ type Config struct {
 	GrpcServerAddress                 string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymmetricKey                 string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	AccessTokenDuration               time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	MigrationUrl                      string        `mapstructure:"MIGRATION_URL"`
 	NewRelicAppName                   string        `mapstructure:"NEWRELIC_APP_NAME"`
 	NewRelicLicenseKey                string        `mapstructure:"NEWRELIC_LICENSE_KEY"`
 	NewRelicLogForwardingEnabled      bool          `mapstructure:"NEWRELIC_LOG_FORWARDING_ENABLED"`
