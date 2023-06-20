@@ -8,7 +8,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hibiken/asynq"
-	"github.com/kwalter26/udemy-simplebank/api"
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
 	"github.com/kwalter26/udemy-simplebank/doc"
 	"github.com/kwalter26/udemy-simplebank/gapi"
@@ -150,14 +149,15 @@ func runTaskProcessor(config util.Config, redisOpt asynq.RedisClientOpt, store d
 	log.Info().Msg("task processor started")
 }
 
-func runGINServer(config util.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create gin server")
-	}
-
-	err = server.Start(config.HttpServerAddress)
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot start server")
-	}
-}
+// runGINServer runs gin server but is not used anymore
+//func runGINServer(config util.Config, store db.Store) {
+//	server, err := api.NewServer(config, store)
+//	if err != nil {
+//		log.Fatal().Err(err).Msg("cannot create gin server")
+//	}
+//
+//	err = server.Start(config.HttpServerAddress)
+//	if err != nil {
+//		log.Fatal().Err(err).Msg("cannot start server")
+//	}
+//}
