@@ -35,7 +35,6 @@ type Environment string
 const (
 	Testing     Environment = "testing"
 	Development Environment = "development"
-	Production  Environment = "production"
 )
 
 func LoadConfig(path string, isTesting bool) (config Config, err error) {
