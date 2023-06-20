@@ -11,6 +11,9 @@ createdb:
 dropdb:
 	docker exec -it postgres-alpine dropdb simple_bank
 
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
+
 migrateup:
 	migrate -path db/migration -database "$(DB_URL)" -verbose up
 
@@ -28,7 +31,7 @@ sqlc:
 	sqlc generate
 
 test:
-	go test -v -coverpkg=./... -cover ./... -coverprofile=coverage.out -short ./tools
+	go test -short -v -coverpkg=./... -cover ./... -coverprofile=coverage.out -short ./tools
 
 server:
 	go run main.go

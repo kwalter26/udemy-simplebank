@@ -12,6 +12,7 @@ import (
 	db "github.com/kwalter26/udemy-simplebank/db/sqlc"
 	"github.com/kwalter26/udemy-simplebank/doc"
 	"github.com/kwalter26/udemy-simplebank/gapi"
+	"github.com/kwalter26/udemy-simplebank/mail"
 	"github.com/kwalter26/udemy-simplebank/pb"
 	"github.com/kwalter26/udemy-simplebank/util"
 	"github.com/kwalter26/udemy-simplebank/worker"
@@ -28,12 +29,12 @@ import (
 )
 
 func main() {
-	config, err := util.LoadConfig(".", util.Prod)
+	config, err := util.LoadConfig(".", false)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot load config:")
 	}
 
-	if config.Environment == util.Development {
+	if config.Environment == util.Development || config.Environment == util.Testing {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
@@ -53,7 +54,7 @@ func main() {
 
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(config, redisOpt, store)
 	go runGatewayServer(config, store, taskDistributor)
 	runGRPCServer(config, store, taskDistributor)
 }
@@ -138,8 +139,9 @@ func runGatewayServer(config util.Config, store db.Store, taskDistributor worker
 }
 
 // run task processor
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	processor := worker.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(config util.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
+	mailer := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	processor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
 	log.Info().Msg("starting task processor")
 	err := processor.Start()
 	if err != nil {

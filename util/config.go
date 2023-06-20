@@ -24,17 +24,21 @@ type Config struct {
 	NewRelicDistributedTracingEnabled bool          `mapstructure:"NEWRELIC_DIST_TRACING_ENABLED"`
 	NewRelicAppEnabled                bool          `mapstructure:"NEWRELIC_APP_ENABLED"`
 	RefreshTokenDuration              time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	EmailSenderName                   string        `mapstructure:"EMAIL_SENDER_NAME"`
+	EmailSenderAddress                string        `mapstructure:"EMAIL_SENDER_ADDRESS"`
+	EmailSenderPassword               string        `mapstructure:"EMAIL_SENDER_PASSWORD"`
+	SendGridApiKey                    string        `mapstructure:"SENDGRID_API_KEY"`
 }
 
 type Environment string
 
 const (
-	Local       Environment = "local"
+	Testing     Environment = "testing"
 	Development Environment = "development"
-	Prod        Environment = "prod"
+	Production  Environment = "production"
 )
 
-func LoadConfig(path string, env Environment) (config Config, err error) {
+func LoadConfig(path string, isTesting bool) (config Config, err error) {
 	v := viper.New()
 	c, err2 := BindEnv(config, v)
 	if err2 != nil {
@@ -42,7 +46,10 @@ func LoadConfig(path string, env Environment) (config Config, err error) {
 	}
 	v.AutomaticEnv()
 	absPath, err := filepath.Abs(path)
-	filename := string(env) + ".env"
+	filename := "app.env"
+	if isTesting {
+		filename = "testing.env"
+	}
 
 	v.AddConfigPath(absPath)
 	v.SetConfigName(filename)

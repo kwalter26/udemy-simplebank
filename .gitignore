@@ -2,7 +2,7 @@
 /coverage.out
 /gin-bin
 *.env
-!local.env
+!testing.env
 !bad.env
 
 dbml-error.log
