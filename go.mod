@@ -9,7 +9,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.9
-	github.com/newrelic/go-agent v3.21.1+incompatible
+	github.com/newrelic/go-agent v3.22.1+incompatible
 	github.com/newrelic/go-agent/v3 v3.21.1
 	github.com/newrelic/go-agent/v3/integrations/nrgin v1.1.3
 	github.com/o1egl/paseto v1.0.0
