@@ -22,6 +22,7 @@ func TestUpdateUserAPI(t *testing.T) {
 
 	newName := util.RandomOwner()
 	newEmail := util.RandomEmail()
+	newPassword := util.RandomString(6)
 
 	invalidEmail := "invalid_email"
 	invalidFullName := "invalid-full_name"
@@ -108,7 +109,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return getAuthCtx(t, tokenMaker, user)
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -124,7 +125,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return getAuthCtx(t, tokenMaker, user)
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -140,7 +141,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return getAuthCtx(t, tokenMaker, user)
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -156,7 +157,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return getAuthCtx(t, tokenMaker, user)
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -173,12 +174,85 @@ func TestUpdateUserAPI(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return getAuthCtx(t, tokenMaker, otherUser)
+				return getAuthCtx(t, tokenMaker, otherUser, time.Minute)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
 				require.Nil(t, res)
 				require.ErrorContains(t, err, "PermissionDenied")
+			},
+		},
+		{
+			name: "UserNotFound",
+			req: &pb.UpdateUserRequest{
+				Username: user.Username,
+				FullName: &newName,
+				Email:    &newEmail,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(db.User{}, sql.ErrNoRows)
+			},
+			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
+				require.Error(t, err)
+				require.Nil(t, res)
+				require.ErrorContains(t, err, "NotFound")
+			},
+		},
+		{
+			name: "InternalError",
+			req: &pb.UpdateUserRequest{
+				Username: user.Username,
+				FullName: &newName,
+				Email:    &newEmail,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(db.User{}, sql.ErrConnDone)
+			},
+			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
+				require.Error(t, err)
+				require.Nil(t, res)
+				require.ErrorContains(t, err, "Internal")
+			},
+		},
+		{
+			name: "ExpiredAccessToken",
+			req: &pb.UpdateUserRequest{
+				Username: user.Username,
+			},
+			buildStubs: func(store *mockdb.MockStore) {},
+			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
+				return getAuthCtx(t, tokenMaker, user, -time.Minute)
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
+				require.Error(t, err)
+				require.Nil(t, res)
+				require.ErrorContains(t, err, "Unauthenticated")
+			},
+		},
+		{
+			name: "UpdatePassword",
+			req: &pb.UpdateUserRequest{
+				Username: user.Username,
+				Password: &newPassword,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(user, nil)
+			},
+			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
+				return getAuthCtx(t, tokenMaker, user, time.Minute)
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Equal(t, res.User.Username, user.Username)
+				require.Equal(t, res.User.FullName, user.FullName)
+				require.Equal(t, res.User.Email, user.Email)
 			},
 		},
 	}
@@ -201,8 +275,8 @@ func TestUpdateUserAPI(t *testing.T) {
 	}
 }
 
-func getAuthCtx(t *testing.T, tokenMaker token.Maker, user db.User) context.Context {
-	accessToken, _, err := tokenMaker.CreateToken(user.Username, time.Minute)
+func getAuthCtx(t *testing.T, tokenMaker token.Maker, user db.User, expire time.Duration) context.Context {
+	accessToken, _, err := tokenMaker.CreateToken(user.Username, expire)
 	require.NoError(t, err)
 	require.NotEmpty(t, accessToken)
 	bearerToken := fmt.Sprintf("%s %s", authorizationBearer, accessToken)
