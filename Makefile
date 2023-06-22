@@ -2,10 +2,17 @@ DB_URL=postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable
 
 postgres:
 	docker run --name postgres-alpine --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:alpine
+
+redis:
+	docker run --name redis -p 6379:6379 -d redis:7.0.3-alpine
+
 createdb:
 	docker exec -it postgres-alpine createdb --username=root --owner=root simple_bank
 dropdb:
 	docker exec -it postgres-alpine dropdb simple_bank
+
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
 
 migrateup:
 	migrate -path db/migration -database "$(DB_URL)" -verbose up
@@ -24,7 +31,7 @@ sqlc:
 	sqlc generate
 
 test:
-	go test -v -coverpkg=./... -cover ./... -coverprofile=coverage.out -short ./tools
+	go test -short -v -coverpkg=./... -cover ./... -coverprofile=coverage.out -short ./tools
 
 server:
 	go run main.go
@@ -34,6 +41,7 @@ gin:
 
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/kwalter26/udemy-simplebank/db/sqlc Store
+	mockgen -package mockwk -destination worker/mock/distributor.go github.com/kwalter26/udemy-simplebank/worker TaskDistributor
 
 db_docs:
 	dbdocs build doc/db.dbml

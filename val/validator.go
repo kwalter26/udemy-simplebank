@@ -64,3 +64,19 @@ func ValidateEmail(email string) error {
 	}
 	return nil
 }
+
+// ValidateEmailId function to Validate an email id and make sure it is greater than 0.
+func ValidateEmailId(value int64) error {
+	if value < 0 {
+		return fmt.Errorf("invalid email id")
+	}
+	return nil
+}
+
+// ValidateSecretCode function to Validate a secret code and make sure it falls between a  min and max length.
+func ValidateSecretCode(value string) error {
+	if err := ValidateString(value, 32, 128); err != nil {
+		return err
+	}
+	return nil
+}
